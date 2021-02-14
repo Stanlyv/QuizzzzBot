@@ -1,40 +1,13 @@
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 import config
 import sqlite3 as sq
 import random
 
-# Подключение к БД
-# with sq.connect("config.py") as config:
-#     cur = config.cursor()
-# Выполнение SQL запроса в БД
-#     query = """
-# #
-# #     """
-#     cur.execute(query)
-
 bot = telebot.TeleBot(config.Token)
 
-#проверяем наличие юзера в БД и записываем его, если его там нет
-def checkadd(chat_id):
-    with sq.connect("quiz.db") as config:
-        cur = config.cursor()
-
-        select_query = f"""SELECT COUNT(id) FROM users
-        WHERE user_id = {chat_id}
-        """
-
-        insert_query = f"""INSERT INTO users (user_id)
-        VALUES ({chat_id})"""
-
-        cur.execute(select_query)
-        res = cur.fetchall()
-        if res[0][0] == 0:
-            cur.execute(insert_query)
-        else:
-            print("не ноль, братан")
-        cur.close()
-
-#начало
+# начало
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.send_message(message.chat.id, """Ну здарова, отец.
@@ -43,42 +16,103 @@ def send_welcome(message):
     checkadd(message.chat.id)
 
 
+#   наличие юзера в БД и записываем его, если его там нет
+def checkadd(chat_id):
+    with sq.connect("quiz.db") as config:
+        cur = config.cursor()
+        select_query = f"SELECT COUNT(id) FROM users WHERE user_id = {chat_id}"
+        insert_query = f"INSERT INTO users (user_id) VALUES ({chat_id})"
+        cur.execute(select_query)
+        res = cur.fetchall()
+        if res[0][0] == 0:
+            cur.execute(insert_query)
+        else:
+            print("не ноль, братан")
+        cur.close()
+
+
 # @bot.message_handler(func=lambda message: True)
 random_num = 0
 random_question_id = 0
+all_category_name =[]
+category_data = ""
 
-
+# выбираем категорию
 @bot.message_handler(commands=['question'])
-#задаем вопрос
-def ask(message):
-
+def choose_category(message):
     with sq.connect("quiz.db") as config:
         cur = config.cursor()
-#получаем список всех вопросов
-        select_all_question_ids = f"""SELECT id FROM questions"""
+        markup_inline = InlineKeyboardMarkup()
+        select_all_category_name = "SELECT category_name FROM category"
+        cur.execute(select_all_category_name)
+        global all_category_name
+        all_category_name = cur.fetchall()
+        print("all_category_name: ", all_category_name)
+        cur.close()
+        for i in range(len(all_category_name)):
+            item = InlineKeyboardButton(text=all_category_name[i][0], callback_data=all_category_name[i][0])
+            markup_inline.add(item)
+        bot.send_message(message.chat.id, "Выберите категорию", reply_markup = markup_inline)
+        # bot.register_next_step_handler(msg, answer_category)
+
+# определяем, выбрал ли юзер категорию
+@bot.callback_query_handler(func = lambda call: True)
+def answer_category(call):
+    print("дошел до answer_category")
+    print("call.data: ", call.data)
+    print("call.message.text" ,call.message.text)
+    # bot.edit_message_text(inline_message_id=call.inline_message_id, text="Бдыщь")
+    for i in range(len(all_category_name)):
+        if call.data == all_category_name[i][0]:
+            print("Сижу в цикле.all_category_name[i][0]: ", all_category_name[i][0])
+            print("Сижу в цикле. call.data:", call.data)
+            print("Сижу в цикле. call.message:", call.message)
+            ask(call.message, all_category_name[i][0])
+            return
+    # следующие две строки не обязательны, ибо функция выполняет лишь действия с кнопок (хотя без кнопок выполняют, дичь)
+    bot.send_message(call.message.chat.id, "Вы не выбрали категорию")
+    choose_category(call.message)
+
+# задаем вопрос
+def ask(message,category_name):
+    global category_data
+    category_data = category_name
+    print("дошел до ask")
+    print("категория: ", category_data)
+    print("message.chat.id:", message.chat.id)
+    with sq.connect("quiz.db") as config:
+        cur = config.cursor()
+
+        # получаем список всех вопросов
+        select_all_question_ids = f'''SELECT questions.id FROM questions
+         INNER JOIN category ON questions.category_id = category.id
+         WHERE category_name = "{category_data}"'''
         cur.execute(select_all_question_ids)
         all_question_ids = cur.fetchall()
         print("all_question_ids:", all_question_ids)
-#получаем список отвеченых вопросов текущего юзера
+
+        # получаем список отвеченых вопросов текущего юзера
         select_done_question_ids = f"""SELECT question_id FROM answers WHERE user_id = {message.chat.id}"""
         cur.execute(select_done_question_ids)
         done_question_ids = cur.fetchall()
         print("done_question_ids:", done_question_ids)
-#вычитаем данные одного списка из другого
+
+        # вычитаем данные одного списка из другого
         not_done_question_ids_dirt = list(set(all_question_ids) - set(done_question_ids))
-        not_done_question_ids =[]
+        not_done_question_ids = []
         for i in range(len(not_done_question_ids_dirt)):
             not_done_question_ids.append(not_done_question_ids_dirt[i][0])
         print("not_done_question_ids:", not_done_question_ids)
         print("len(not_done_question_ids):", len(not_done_question_ids))
         if len(not_done_question_ids) == 0:
-            bot.send_message(message.chat.id, "Ты ответил на все возможные вопросы.Могу предложить обнулить твои результаты /reset. Либо жди новых вопросов и нажимай /question.")
+            bot.send_message(message.chat.id,"Ты ответил на все возможные вопросы в данной категории. Могу предложить обнулить твои результаты /reset. Либо жди новых вопросов и нажимай /question.")
             return
-# выбираем случайный номер вопроса
+
+        # выбираем случайный номер вопроса
         global random_num
         random_num = random.randint(1, len(not_done_question_ids))
         global random_question_id
-        random_question_id = not_done_question_ids[random_num-1]
+        random_question_id = not_done_question_ids[random_num - 1]
         select_new_question_id = f"""SELECT question FROM questions WHERE id = {random_question_id}"""
         cur.execute(select_new_question_id)
         question = cur.fetchall()
@@ -86,26 +120,21 @@ def ask(message):
 
         cur.close()
 
-#удаляем инфу пройденых вопросах юзера
-@bot.message_handler(commands=['reset'])
-def reset_stat(message):
-    with sq.connect("quiz.db") as config:
-        cur = config.cursor()
-        remove_stats = f"""DELETE FROM answers WHERE user_id = {message.chat.id}"""
-        cur.execute(remove_stats)
 
-        bot.send_message(message.chat.id, "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question")
-
-        cur.close()
 @bot.message_handler(func=lambda message: True)
-#получаем и обрабатываем ответ
+# получаем и обрабатываем ответ
 def answer(message):
+    print("дошел до answer")
+    print("category_data:",category_data)
     global random_num
     if random_num > 0:
-        #вытаскиваем ответ с БД
+        # вытаскиваем ответ с БД
         with sq.connect("quiz.db") as config:
             cur = config.cursor()
-
+            select_category_id = f'SELECT id FROM category WHERE category_name = "{category_data}"'
+            cur.execute(select_category_id)
+            category_id = cur.fetchall()
+            print("category_id: ",category_id)
             select_query = f"""SELECT answer FROM questions WHERE id = {random_question_id}"""
             cur.execute(select_query)
             answer = cur.fetchall()
@@ -113,21 +142,38 @@ def answer(message):
             while flag:
                 if message.text.lower() == answer[0][0].lower():
 
-                    #вставили пометку в бд, что игрок ответил на данный вопрос
-                    insert_query = f"INSERT INTO answers (user_id, question_id) VALUES ({message.chat.id}, {random_question_id})"
+                    # вставили пометку в бд, что игрок ответил на данный вопрос
+                    insert_query = f"INSERT INTO answers (user_id, question_id, question_type) VALUES ({message.chat.id}, {random_question_id}, {category_id[0][0]}) "
                     cur.execute(insert_query)
 
                     bot.send_message(message.chat.id, "Молодец, следующий вопрос:")
                     flag = False
                     random_num = 0
                 else:
-                    bot.send_message(message.chat.id, "Не верно. Глянь, правильно ли ты написал ответ. Если не справляешься, можешь выбрать новый вопрос. /question")
+                    bot.send_message(message.chat.id,
+                                     "Не верно. Глянь, правильно ли ты написал ответ. Если не справляешься, можешь выбрать новый вопрос. /question")
                     return
             cur.close()
         random_num = 0
-        ask(message)
+        ask(message,category_data)
+        return
     else:
         bot.send_message(message.chat.id, "Ты еще не получил вопрос, дружочек. Тыкай /question.")
         return
+
+
+# удаляем инфу пройденых вопросах юзера
+@bot.message_handler(commands=['reset'])
+def reset_stat(message):
+    with sq.connect("quiz.db") as config:
+        cur = config.cursor()
+        remove_stats = f"""DELETE FROM answers WHERE user_id = {message.chat.id}"""
+        cur.execute(remove_stats)
+
+        bot.send_message(message.chat.id,
+                         "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question")
+
+        cur.close()
+
 
 bot.polling(none_stop=True)
