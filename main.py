@@ -1,9 +1,9 @@
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+from telebot import types
 import config
 import sqlite3 as sq
 import random
+from datetime import datetime
 
 bot = telebot.TeleBot(config.Token)
 
@@ -42,7 +42,7 @@ category_data = ""
 def choose_category(message):
     with sq.connect("quiz.db") as config:
         cur = config.cursor()
-        markup_inline = InlineKeyboardMarkup()
+        markup_inline = types.InlineKeyboardMarkup()
         select_all_category_name = "SELECT category_name FROM category"
         cur.execute(select_all_category_name)
         global all_category_name
@@ -50,7 +50,7 @@ def choose_category(message):
         print("all_category_name: ", all_category_name)
         cur.close()
         for i in range(len(all_category_name)):
-            item = InlineKeyboardButton(text=all_category_name[i][0], callback_data=all_category_name[i][0])
+            item = types.InlineKeyboardButton(text=all_category_name[i][0], callback_data=all_category_name[i][0])
             markup_inline.add(item)
         bot.send_message(message.chat.id, "Выберите категорию", reply_markup = markup_inline)
         # bot.register_next_step_handler(msg, answer_category)
@@ -175,5 +175,21 @@ def reset_stat(message):
 
         cur.close()
 
+# блок с фидбеком к разработчику в два этапа: вызов функции -> взятие и передача сообщения
+@bot.message_handler(commands=['feedback'])
+def send_feedback(message):
+    print("message.chat.id: ", message.chat.id)
+    msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику. (Пока поддерживается лишь текст)")
+    bot.register_next_step_handler(msg, feedback)
+
+def feedback(message):
+    feedback_text = f"""Username: {message.chat.username}
+id: {message.chat.id}
+Name: {message.chat.first_name} 
+Last name: {message.chat.last_name}
+Date: {datetime.utcfromtimestamp(message.date).strftime('%Y-%m-%d %H:%M:%S')} 
+Text: {message.text}"""
+    #отсылаю в группу с ботами и мной
+    bot.send_message(-581149603, feedback_text)
 
 bot.polling(none_stop=True)
