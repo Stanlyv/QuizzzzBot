@@ -61,7 +61,7 @@ def answer_category(call):
     print("дошел до answer_category")
     print("call.data: ", call.data)
     print("call.message.text" ,call.message.text)
-    # bot.edit_message_text(inline_message_id=call.inline_message_id, text="Бдыщь")
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=(f"Вы выбрали {call.data}"), reply_markup=False)
     for i in range(len(all_category_name)):
         if call.data == all_category_name[i][0]:
             print("Сижу в цикле.all_category_name[i][0]: ", all_category_name[i][0])
@@ -121,6 +121,54 @@ def ask(message,category_name):
         cur.close()
 
 
+# удаляем инфу пройденых вопросах юзера
+@bot.message_handler(commands=['reset'])
+def reset_question(message):
+    btns = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    btns.add(types.KeyboardButton("Да"),types.KeyboardButton("Нет"))
+    msg = bot.send_message(message.chat.id, "Ты уверен?", reply_markup=btns)
+    bot.register_next_step_handler(msg, reset_stat)
+
+def reset_stat(message):
+    if message.text.lower() == "да":
+        with sq.connect("quiz.db") as config:
+            cur = config.cursor()
+            remove_stats = f"""DELETE FROM answers WHERE user_id = {message.chat.id}"""
+            cur.execute(remove_stats)
+
+            bot.send_message(message.chat.id,
+                             "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question")
+            cur.close()
+    elif message.text.lower() == "нет":
+        bot.send_message(message.chat.id, "Нет, так нет. Выбирай вопросики :) /question")
+        return
+    else:
+        reset_question(message)
+        return
+
+
+
+
+
+# блок с фидбеком к разработчику в два этапа: вызов функции -> взятие и передача сообщения
+@bot.message_handler(commands=['feedback'])
+def send_feedback(message):
+    print("message.chat.id: ", message.chat.id)
+    msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику. (Пока поддерживается лишь текст)")
+    bot.register_next_step_handler(msg, feedback)
+
+def feedback(message):
+    feedback_text = f"""Username: {message.chat.username}
+id: {message.chat.id}
+Name: {message.chat.first_name} 
+Last name: {message.chat.last_name}
+Date: {datetime.utcfromtimestamp(message.date).strftime('%Y-%m-%d %H:%M:%S')} 
+Text: {message.text}"""
+    #отсылаю в группу с ботами и мной
+    bot.send_message(-581149603, feedback_text)
+    bot.send_message(message.chat.id, "Ваше сообщение доставлено!")
+
+
 @bot.message_handler(func=lambda message: True)
 # получаем и обрабатываем ответ
 def answer(message):
@@ -161,35 +209,5 @@ def answer(message):
         bot.send_message(message.chat.id, "Ты еще не получил вопрос, дружочек. Тыкай /question.")
         return
 
-
-# удаляем инфу пройденых вопросах юзера
-@bot.message_handler(commands=['reset'])
-def reset_stat(message):
-    with sq.connect("quiz.db") as config:
-        cur = config.cursor()
-        remove_stats = f"""DELETE FROM answers WHERE user_id = {message.chat.id}"""
-        cur.execute(remove_stats)
-
-        bot.send_message(message.chat.id,
-                         "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question")
-
-        cur.close()
-
-# блок с фидбеком к разработчику в два этапа: вызов функции -> взятие и передача сообщения
-@bot.message_handler(commands=['feedback'])
-def send_feedback(message):
-    print("message.chat.id: ", message.chat.id)
-    msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику. (Пока поддерживается лишь текст)")
-    bot.register_next_step_handler(msg, feedback)
-
-def feedback(message):
-    feedback_text = f"""Username: {message.chat.username}
-id: {message.chat.id}
-Name: {message.chat.first_name} 
-Last name: {message.chat.last_name}
-Date: {datetime.utcfromtimestamp(message.date).strftime('%Y-%m-%d %H:%M:%S')} 
-Text: {message.text}"""
-    #отсылаю в группу с ботами и мной
-    bot.send_message(-581149603, feedback_text)
 
 bot.polling(none_stop=True)
