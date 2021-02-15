@@ -7,6 +7,7 @@ from datetime import datetime
 
 bot = telebot.TeleBot(config.Token)
 
+
 # начало
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -34,8 +35,9 @@ def checkadd(chat_id):
 # @bot.message_handler(func=lambda message: True)
 random_num = 0
 random_question_id = 0
-all_category_name =[]
+all_category_name = []
 category_data = ""
+
 
 # выбираем категорию
 @bot.message_handler(commands=['question'])
@@ -50,18 +52,21 @@ def choose_category(message):
         print("all_category_name: ", all_category_name)
         cur.close()
         for i in range(len(all_category_name)):
-            item = types.InlineKeyboardButton(text=all_category_name[i][0], callback_data=all_category_name[i][0])
+            item = types.InlineKeyboardButton(text=all_category_name[i][0], callback_data=f"category_{all_category_name[i][0]}")
             markup_inline.add(item)
-        bot.send_message(message.chat.id, "Выберите категорию", reply_markup = markup_inline)
+        bot.send_message(message.chat.id, "Выберите категорию", reply_markup=markup_inline)
         # bot.register_next_step_handler(msg, answer_category)
 
+
 # определяем, выбрал ли юзер категорию
-@bot.callback_query_handler(func = lambda call: True)
+@bot.callback_query_handler(func=lambda call: call.data.startswith("category_"))
 def answer_category(call):
+    call.data = call.data[9:]
     print("дошел до answer_category")
     print("call.data: ", call.data)
-    print("call.message.text" ,call.message.text)
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=(f"Вы выбрали {call.data}"), reply_markup=False)
+    print("call.message.text", call.message.text)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=(f"Вы выбрали {call.data}"), reply_markup=False)
     for i in range(len(all_category_name)):
         if call.data == all_category_name[i][0]:
             print("Сижу в цикле.all_category_name[i][0]: ", all_category_name[i][0])
@@ -73,8 +78,9 @@ def answer_category(call):
     bot.send_message(call.message.chat.id, "Вы не выбрали категорию")
     choose_category(call.message)
 
+
 # задаем вопрос
-def ask(message,category_name):
+def ask(message, category_name):
     global category_data
     category_data = category_name
     print("дошел до ask")
@@ -105,7 +111,8 @@ def ask(message,category_name):
         print("not_done_question_ids:", not_done_question_ids)
         print("len(not_done_question_ids):", len(not_done_question_ids))
         if len(not_done_question_ids) == 0:
-            bot.send_message(message.chat.id,"Ты ответил на все возможные вопросы в данной категории. Могу предложить обнулить твои результаты /reset. Либо жди новых вопросов и нажимай /question.")
+            bot.send_message(message.chat.id,
+                             "Ты ответил на все возможные вопросы в данной категории. Могу предложить обнулить твои результаты /reset. Либо жди новых вопросов и нажимай /question.")
             return
 
         # выбираем случайный номер вопроса
@@ -137,7 +144,7 @@ def reset_stat(message):
             cur.execute(remove_stats)
 
             bot.send_message(message.chat.id,
-                             "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question")
+                             "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question", reply_markup=types.ReplyKeyboardRemove())
             cur.close()
     elif message.text.lower() == "нет":
         bot.send_message(message.chat.id, "Нет, так нет. Выбирай вопросики :) /question")
@@ -146,10 +153,6 @@ def reset_stat(message):
         reset_question(message)
         return
 
-
-
-
-
 # блок с фидбеком к разработчику в два этапа: вызов функции -> взятие и передача сообщения
 @bot.message_handler(commands=['feedback'])
 def send_feedback(message):
@@ -157,15 +160,16 @@ def send_feedback(message):
     msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику. (Пока поддерживается лишь текст)")
     bot.register_next_step_handler(msg, feedback)
 
+
 def feedback(message):
     feedback_text = f"""Username: {message.chat.username}
-id: {message.chat.id}
 Name: {message.chat.first_name} 
 Last name: {message.chat.last_name}
 Date: {datetime.utcfromtimestamp(message.date).strftime('%Y-%m-%d %H:%M:%S')} 
-Text: {message.text}"""
-    #отсылаю в группу с ботами и мной
+↓↓↓↓↓↓↓"""
+    # отсылаю в группу с ботами и мной
     bot.send_message(-581149603, feedback_text)
+    bot.forward_message(-581149603, message.chat.id, message.id)
     bot.send_message(message.chat.id, "Ваше сообщение доставлено!")
 
 
@@ -173,7 +177,7 @@ Text: {message.text}"""
 # получаем и обрабатываем ответ
 def answer(message):
     print("дошел до answer")
-    print("category_data:",category_data)
+    print("category_data:", category_data)
     global random_num
     if random_num > 0:
         # вытаскиваем ответ с БД
@@ -182,7 +186,7 @@ def answer(message):
             select_category_id = f'SELECT id FROM category WHERE category_name = "{category_data}"'
             cur.execute(select_category_id)
             category_id = cur.fetchall()
-            print("category_id: ",category_id)
+            print("category_id: ", category_id)
             select_query = f"""SELECT answer FROM questions WHERE id = {random_question_id}"""
             cur.execute(select_query)
             answer = cur.fetchall()
@@ -203,7 +207,7 @@ def answer(message):
                     return
             cur.close()
         random_num = 0
-        ask(message,category_data)
+        ask(message, category_data)
         return
     else:
         bot.send_message(message.chat.id, "Ты еще не получил вопрос, дружочек. Тыкай /question.")
