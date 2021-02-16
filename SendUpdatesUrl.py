@@ -2,12 +2,12 @@ import urllib.request
 import config
 
 chat_ids = [199610041, 273077469, 308729527, 884721281]
-text = """Game Quiz Bot v0.5 has been released! (Yeah, not 0.4)
+text = """Game Quiz Bot v0.6 has been released!
 Changelog:
-1. Categories buttons disappearing added
-2. Reset warning added
-3. **Feedback feature added** (Only text for now)
-4. Nervi uspokoilis' kofeechkom"""
+1. All message type are supporting in feedback now
+2. Keyboard button disappearing added
+3. DB changes
+4. Ya vse eshe ne znau, kak otpravlyat' etot tekst na russkom"""
 text = text.replace(" ", "%20")
 text = text.replace("\n", "%0A")
 

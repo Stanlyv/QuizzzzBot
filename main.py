@@ -14,21 +14,27 @@ def send_welcome(message):
     bot.send_message(message.chat.id, """Ну здарова, отец.
 Тут ты сможешь отвечать на каверзные вопросы, участвовать в викторинах и многое другое. Планируется расширение вопросной базы по разным темам. Не теряйся :)""")
     bot.send_message(message.chat.id, "Если готов к вопросикам, то пиши /question")
-    checkadd(message.chat.id)
+    checkadd(message)
 
 
 #   наличие юзера в БД и записываем его, если его там нет
-def checkadd(chat_id):
+def checkadd(message):
     with sq.connect("quiz.db") as config:
+        username, first_name, last_name = message.chat.username, message.chat.first_name,message.chat.last_name
+        username = "'{}'".format(username) if username is not None else "Null"
+        first_name = "'{}'".format(first_name) if first_name is not None else "Null"
+        last_name = "'{}'".format(last_name) if last_name is not None else "Null"
+        print(username, first_name, last_name)
         cur = config.cursor()
-        select_query = f"SELECT COUNT(id) FROM users WHERE user_id = {chat_id}"
-        insert_query = f"INSERT INTO users (user_id) VALUES ({chat_id})"
+        select_query = f"SELECT COUNT(id) FROM users WHERE user_id = {message.chat.id}"
+        insert_query = f"INSERT INTO users (user_id, username, fisrt_name, last_name) VALUES ({message.chat.id},{username},{first_name},{last_name}) "
         cur.execute(select_query)
         res = cur.fetchall()
         if res[0][0] == 0:
             cur.execute(insert_query)
+            print("добавили пользователя",message.chat.id, "в базу")
         else:
-            print("не ноль, братан")
+            print("пользователь",message.chat.id, "был в базе")
         cur.close()
 
 
@@ -42,6 +48,7 @@ category_data = ""
 # выбираем категорию
 @bot.message_handler(commands=['question'])
 def choose_category(message):
+    checkadd(message)
     with sq.connect("quiz.db") as config:
         cur = config.cursor()
         markup_inline = types.InlineKeyboardMarkup()
@@ -131,9 +138,10 @@ def ask(message, category_name):
 # удаляем инфу пройденых вопросах юзера
 @bot.message_handler(commands=['reset'])
 def reset_question(message):
+    checkadd(message)
     btns = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     btns.add(types.KeyboardButton("Да"),types.KeyboardButton("Нет"))
-    msg = bot.send_message(message.chat.id, "Ты уверен?", reply_markup=btns)
+    msg = bot.send_message(message.chat.id, "Ты уверен что хочешь удалить все свои ответы?", reply_markup=btns)
     bot.register_next_step_handler(msg, reset_stat)
 
 def reset_stat(message):
@@ -156,6 +164,7 @@ def reset_stat(message):
 # блок с фидбеком к разработчику в два этапа: вызов функции -> взятие и передача сообщения
 @bot.message_handler(commands=['feedback'])
 def send_feedback(message):
+    checkadd(message)
     print("message.chat.id: ", message.chat.id)
     msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику. (Пока поддерживается лишь текст)")
     bot.register_next_step_handler(msg, feedback)
@@ -176,6 +185,7 @@ Date: {datetime.utcfromtimestamp(message.date).strftime('%Y-%m-%d %H:%M:%S')}
 @bot.message_handler(func=lambda message: True)
 # получаем и обрабатываем ответ
 def answer(message):
+    checkadd(message)
     print("дошел до answer")
     print("category_data:", category_data)
     global random_num
