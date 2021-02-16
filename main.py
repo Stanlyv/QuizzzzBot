@@ -166,7 +166,7 @@ def reset_stat(message):
 def send_feedback(message):
     checkadd(message)
     print("message.chat.id: ", message.chat.id)
-    msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику. (Пока поддерживается лишь текст)")
+    msg = bot.send_message(message.chat.id, "Введите ваше сообщение разработчику.")
     bot.register_next_step_handler(msg, feedback)
 
 

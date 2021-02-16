@@ -1,13 +1,26 @@
 import urllib.request
 import config
+import sqlite3 as sq
 
-chat_ids = [199610041, 273077469, 308729527, 884721281]
-text = """Game Quiz Bot v0.6 has been released!
-Changelog:
-1. All message type are supporting in feedback now
-2. Keyboard button disappearing added
-3. DB changes
-4. Ya vse eshe ne znau, kak otpravlyat' etot tekst na russkom"""
+
+def select_users():
+    with sq.connect("quiz.db") as config:
+        cur = config.cursor()
+        select_all_category_name = "SELECT user_id FROM users"
+        cur.execute(select_all_category_name)
+        users_ids_dirt = cur.fetchall()
+        users_ids = []
+        cur.close()
+        for i in range(len(users_ids_dirt)):
+            users_ids.append(users_ids_dirt[i][0])
+        print("users_ids", users_ids)
+        return users_ids
+
+
+chat_ids = select_users()
+print("users_ids после селекта", chat_ids)
+# chat_ids = [199610041, 273077469, 308729527, 884721281, 142867079]
+text = """test na live, sorry"""
 text = text.replace(" ", "%20")
 text = text.replace("\n", "%0A")
 
