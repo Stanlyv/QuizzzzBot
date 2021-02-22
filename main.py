@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 
 # bot = telebot.TeleBot(config.Token)
-bot = "1613886346:AAEm7AW7Fc_kecCwnlafEPJ_vk-hvZHfL7Q"
+bot = telebot.TeleBot("1613886346:AAEm7AW7Fc_kecCwnlafEPJ_vk-hvZHfL7Q")
 
 # начало
 @bot.message_handler(commands=['start'])
@@ -149,8 +149,8 @@ def reset_stat(message):
             remove_stats = f"""DELETE FROM answers WHERE user_id = {message.chat.id}"""
             cur.execute(remove_stats)
 
-            bot.send_message(message.chat.id,
-                             "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question", reply_markup=telebot.types.ReplyKeyboardRemove())
+            bot.send_message(message.chat.id,"""Ну вот, ты удалил все свои достижения.
+Чтобы начать отвечать на вопросы, нажимай /question""", reply_markup=telebot.types.ReplyKeyboardRemove())
             cur.close()
     elif message.text.lower() == "нет":
         bot.send_message(message.chat.id, "Нет, так нет. Выбирай вопросики :) /question")
