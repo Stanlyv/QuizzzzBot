@@ -5,8 +5,8 @@ import sqlite3 as sq
 import random
 from datetime import datetime
 
-bot = telebot.TeleBot(config.Token)
-
+# bot = telebot.TeleBot(config.Token)
+bot = "1613886346:AAEm7AW7Fc_kecCwnlafEPJ_vk-hvZHfL7Q"
 
 # начало
 @bot.message_handler(commands=['start'])
