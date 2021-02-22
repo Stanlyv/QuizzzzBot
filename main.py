@@ -1,6 +1,4 @@
 import telebot
-from telebot import types
-import config
 import sqlite3 as sq
 import random
 from datetime import datetime
@@ -51,7 +49,7 @@ def choose_category(message):
     checkadd(message)
     with sq.connect("quiz.db") as config:
         cur = config.cursor()
-        markup_inline = types.InlineKeyboardMarkup()
+        markup_inline = telebot.types.InlineKeyboardMarkup()
         select_all_category_name = "SELECT category_name FROM category"
         cur.execute(select_all_category_name)
         global all_category_name
@@ -59,7 +57,7 @@ def choose_category(message):
         print("all_category_name: ", all_category_name)
         cur.close()
         for i in range(len(all_category_name)):
-            item = types.InlineKeyboardButton(text=all_category_name[i][0], callback_data=f"category_{all_category_name[i][0]}")
+            item = telebot.types.InlineKeyboardButton(text=all_category_name[i][0], callback_data=f"category_{all_category_name[i][0]}")
             markup_inline.add(item)
         bot.send_message(message.chat.id, "Выберите категорию", reply_markup=markup_inline)
         # bot.register_next_step_handler(msg, answer_category)
@@ -139,8 +137,8 @@ def ask(message, category_name):
 @bot.message_handler(commands=['reset'])
 def reset_question(message):
     checkadd(message)
-    btns = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    btns.add(types.KeyboardButton("Да"),types.KeyboardButton("Нет"))
+    btns = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    btns.add(telebot.types.KeyboardButton("Да"),telebot.types.KeyboardButton("Нет"))
     msg = bot.send_message(message.chat.id, "Ты уверен что хочешь удалить все свои ответы?", reply_markup=btns)
     bot.register_next_step_handler(msg, reset_stat)
 
@@ -152,7 +150,7 @@ def reset_stat(message):
             cur.execute(remove_stats)
 
             bot.send_message(message.chat.id,
-                             "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question", reply_markup=types.ReplyKeyboardRemove())
+                             "Ну вот, ты удалил все свои достижения. Чтобы начать отвечать на вопросы, нажимай /question", reply_markup=telebot.types.ReplyKeyboardRemove())
             cur.close()
     elif message.text.lower() == "нет":
         bot.send_message(message.chat.id, "Нет, так нет. Выбирай вопросики :) /question")
