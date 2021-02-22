@@ -154,7 +154,7 @@ def reset_stat(message):
 Чтобы начать отвечать на вопросы, нажимай /question""", reply_markup=telebot.types.ReplyKeyboardRemove())
             cur.close()
     elif message.text.lower() == "нет":
-        bot.send_message(message.chat.id, "Нет, так нет. Выбирай вопросики :) /question")
+        bot.send_message(message.chat.id, "Нет, так нет. Выбирай вопросики :) /question", reply_markup=telebot.types.ReplyKeyboardRemove())
         return
     else:
         reset_question(message)
