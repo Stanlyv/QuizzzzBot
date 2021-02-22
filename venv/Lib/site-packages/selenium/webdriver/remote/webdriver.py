@@ -30,8 +30,7 @@ from .switch_to import SwitchTo
 from .mobile import Mobile
 from .file_detector import FileDetector, LocalFileDetector
 from selenium.common.exceptions import (InvalidArgumentException,
-                                        WebDriverException,
-                                        NoSuchCookieException)
+                                        WebDriverException)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.html5.application_cache import ApplicationCache
 
@@ -141,7 +140,7 @@ class WebDriver(object):
                 capabilities.update(desired_capabilities)
         if proxy is not None:
             warnings.warn("Please use FirefoxOptions to set proxy",
-                          DeprecationWarning, stacklevel=2)
+                          DeprecationWarning)
             proxy.add_to_capabilities(capabilities)
         self.command_executor = command_executor
         if type(self.command_executor) is bytes or isinstance(self.command_executor, str):
@@ -153,7 +152,7 @@ class WebDriver(object):
         self.start_client()
         if browser_profile is not None:
             warnings.warn("Please use FirefoxOptions to set browser profile",
-                          DeprecationWarning, stacklevel=2)
+                          DeprecationWarning)
         self.start_session(capabilities, browser_profile)
         self._switch_to = SwitchTo(self)
         self._mobile = Mobile(self)
@@ -770,36 +769,31 @@ class WebDriver(object):
     def switch_to_active_element(self):
         """ Deprecated use driver.switch_to.active_element
         """
-        warnings.warn("use driver.switch_to.active_element instead",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("use driver.switch_to.active_element instead", DeprecationWarning)
         return self._switch_to.active_element
 
     def switch_to_window(self, window_name):
         """ Deprecated use driver.switch_to.window
         """
-        warnings.warn("use driver.switch_to.window instead",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("use driver.switch_to.window instead", DeprecationWarning)
         self._switch_to.window(window_name)
 
     def switch_to_frame(self, frame_reference):
         """ Deprecated use driver.switch_to.frame
         """
-        warnings.warn("use driver.switch_to.frame instead",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("use driver.switch_to.frame instead", DeprecationWarning)
         self._switch_to.frame(frame_reference)
 
     def switch_to_default_content(self):
         """ Deprecated use driver.switch_to.default_content
         """
-        warnings.warn("use driver.switch_to.default_content instead",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("use driver.switch_to.default_content instead", DeprecationWarning)
         self._switch_to.default_content()
 
     def switch_to_alert(self):
         """ Deprecated use driver.switch_to.alert
         """
-        warnings.warn("use driver.switch_to.alert instead",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("use driver.switch_to.alert instead", DeprecationWarning)
         return self._switch_to.alert
 
     # Navigation
@@ -847,17 +841,11 @@ class WebDriver(object):
         :Usage:
             driver.get_cookie('my_cookie')
         """
-        if self.w3c:
-            try:
-                return self.execute(Command.GET_COOKIE, {'name': name})['value']
-            except NoSuchCookieException:
-                return None
-        else:
-            cookies = self.get_cookies()
-            for cookie in cookies:
-                if cookie['name'] == name:
-                    return cookie
-            return None
+        cookies = self.get_cookies()
+        for cookie in cookies:
+            if cookie['name'] == name:
+                return cookie
+        return None
 
     def delete_cookie(self, name):
         """

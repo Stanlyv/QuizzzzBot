@@ -76,9 +76,6 @@ class ActionBuilder(object):
         self.driver.execute(Command.W3C_ACTIONS, enc)
 
     def clear_actions(self):
-        """
-            Clears actions that are already stored on the remote end
-        """
         self.driver.execute(Command.W3C_CLEAR_ACTIONS)
 
     def _add_input(self, input):

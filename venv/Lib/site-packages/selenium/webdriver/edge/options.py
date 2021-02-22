@@ -22,7 +22,6 @@ class Options(object):
 
     def __init__(self):
         self._page_load_strategy = "normal"
-        self._caps = DesiredCapabilities.EDGE.copy()
 
     @property
     def page_load_strategy(self):
@@ -34,21 +33,13 @@ class Options(object):
             raise ValueError("Page Load Strategy should be 'normal', 'eager' or 'none'.")
         self._page_load_strategy = value
 
-    @property
-    def capabilities(self):
-        return self._caps
-
-    def set_capability(self, name, value):
-        """Sets a capability."""
-        self._caps[name] = value
-
     def to_capabilities(self):
         """
             Creates a capabilities with all the options that have been set and
 
             returns a dictionary with everything
         """
-        caps = self._caps
-        caps['pageLoadStrategy'] = self._page_load_strategy
+        edge = DesiredCapabilities.EDGE.copy()
+        edge['pageLoadStrategy'] = self._page_load_strategy
 
-        return caps
+        return edge

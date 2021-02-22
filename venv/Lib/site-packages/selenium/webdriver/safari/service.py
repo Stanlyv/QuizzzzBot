@@ -25,15 +25,13 @@ class Service(service.Service):
     Object that manages the starting and stopping of the SafariDriver
     """
 
-    def __init__(self, executable_path, port=0, quiet=False, service_args=None):
+    def __init__(self, executable_path, port=0, quiet=False):
         """
         Creates a new instance of the Service
 
         :Args:
          - executable_path : Path to the SafariDriver
-         - port : Port the service is running on
-         - quiet : Suppress driver stdout and stderr
-         - service_args : List of args to pass to the safaridriver service """
+         - port : Port the service is running on """
 
         if not os.path.exists(executable_path):
             if "Safari Technology Preview" in executable_path:
@@ -45,8 +43,6 @@ class Service(service.Service):
         if port == 0:
             port = utils.free_port()
 
-        self.service_args = service_args or []
-
         self.quiet = quiet
         log = PIPE
         if quiet:
@@ -54,7 +50,7 @@ class Service(service.Service):
         service.Service.__init__(self, executable_path, port, log)
 
     def command_line_args(self):
-        return ["-p", "%s" % self.port] + self.service_args
+        return ["-p", "%s" % self.port]
 
     @property
     def service_url(self):

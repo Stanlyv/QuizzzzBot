@@ -32,7 +32,7 @@ class WebDriver(RemoteWebDriver):
 
     def __init__(self, executable_path="WebKitWebDriver", port=0, options=None,
                  desired_capabilities=DesiredCapabilities.WEBKITGTK,
-                 service_log_path=None, keep_alive=False):
+                 service_log_path=None):
         """
         Creates a new instance of the WebKitGTK driver.
 
@@ -44,7 +44,6 @@ class WebDriver(RemoteWebDriver):
          - options : an instance of WebKitGTKOptions
          - desired_capabilities : Dictionary object with desired capabilities
          - service_log_path : Path to write service stdout and stderr output.
-         - keep_alive : Whether to configure RemoteConnection to use HTTP keep-alive.
         """
         if options is not None:
             capabilities = options.to_capabilities()
@@ -57,8 +56,7 @@ class WebDriver(RemoteWebDriver):
         RemoteWebDriver.__init__(
             self,
             command_executor=self.service.service_url,
-            desired_capabilities=desired_capabilities,
-            keep_alive=keep_alive)
+            desired_capabilities=desired_capabilities)
         self._is_remote = False
 
     def quit(self):

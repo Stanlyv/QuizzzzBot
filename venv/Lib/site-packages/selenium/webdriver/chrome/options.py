@@ -33,7 +33,6 @@ class Options(object):
         self._extensions = []
         self._experimental_options = {}
         self._debugger_address = None
-        self._caps = DesiredCapabilities.CHROME.copy()
 
     @property
     def binary_location(self):
@@ -51,14 +50,6 @@ class Options(object):
          - value: path to the Chromium binary
         """
         self._binary_location = value
-
-    @property
-    def capabilities(self):
-        return self._caps
-
-    def set_capability(self, name, value):
-        """Sets a capability."""
-        self._caps[name] = value
 
     @property
     def debugger_address(self):
@@ -188,7 +179,7 @@ class Options(object):
     def set_headless(self, headless=True):
         """ Deprecated, options.headless = True """
         warnings.warn('use setter for headless property instead of set_headless',
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning)
         self.headless = headless
 
     def to_capabilities(self):
@@ -197,7 +188,8 @@ class Options(object):
 
             returns a dictionary with everything
         """
-        caps = self._caps
+        caps = DesiredCapabilities.CHROME.copy()
+
         chrome_options = self.experimental_options.copy()
         chrome_options["extensions"] = self.extensions
         if self.binary_location:

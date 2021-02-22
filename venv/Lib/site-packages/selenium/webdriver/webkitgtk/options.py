@@ -25,15 +25,6 @@ class Options(object):
         self._binary_location = ''
         self._arguments = []
         self._overlay_scrollbars_enabled = True
-        self._caps = DesiredCapabilities.WEBKITGTK.copy()
-
-    @property
-    def capabilities(self):
-        return self._caps
-
-    def set_capability(self, name, value):
-        """Sets a capability."""
-        self._caps[name] = value
 
     @property
     def binary_location(self):
@@ -93,7 +84,7 @@ class Options(object):
         Creates a capabilities with all the options that have been set and
         returns a dictionary with everything
         """
-        caps = self._caps
+        caps = DesiredCapabilities.WEBKITGTK.copy()
 
         browser_options = {}
         if self.binary_location:

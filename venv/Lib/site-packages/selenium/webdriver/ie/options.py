@@ -47,7 +47,6 @@ class Options(object):
         self._arguments = []
         self._options = {}
         self._additional = {}
-        self._caps = DesiredCapabilities.INTERNETEXPLORER.copy()
 
     @property
     def arguments(self):
@@ -64,14 +63,6 @@ class Options(object):
     def options(self):
         """ Returns a dictionary of browser options """
         return self._options
-
-    @property
-    def capabilities(self):
-        return self._caps
-
-    def set_capability(self, name, value):
-        """Sets a capability."""
-        self._caps[name] = value
 
     @property
     def browser_attach_timeout(self):
@@ -337,7 +328,7 @@ class Options(object):
 
     def to_capabilities(self):
         """ Marshals the IE options to a the correct object """
-        caps = self._caps
+        caps = DesiredCapabilities.INTERNETEXPLORER.copy()
 
         opts = self._options.copy()
         if len(self._arguments) > 0:

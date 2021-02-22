@@ -44,7 +44,6 @@ class Pause(Interaction):
         self.duration = duration
 
     def encode(self):
-        return {
-            "type": self.PAUSE,
-            "duration": int(self.duration * 1000)
-        }
+        output = {"type": self.PAUSE}
+        output["duration"] = self.duration * 1000
+        return output
