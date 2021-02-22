@@ -1,2 +1,1 @@
-web: main.py
-worker: congig.py
+worker: main.py
